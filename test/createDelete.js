@@ -1,36 +1,26 @@
-var assert = require('assert');
-var request = require('request');
-var fs = require('fs');
+const assert = require('assert');
+const request = require('request');
 
 describe('Create, Delete', function() {
-	this.timeout(5000);
-    it('should create a new Todo, & delete it', function(done) {
-		// Build and log the path
-		var path = "https://" + process.env.TODOS_ENDPOINT + "/todos";
+  this.timeout(5000);
 
-		// Fetch the comparison payload
-		require.extensions['.txt'] = function (module, filename) {
-		    module.exports = fs.readFileSync(filename, 'utf8');
-		};
-		var desiredPayload = require("./data/newTodo1.json");
+  it('should create a new Todo, & delete it', function(done) {
+    const base = `https://${process.env.TODOS_ENDPOINT}/todos`;
+    const payload = require('./data/newTodo1.json');
 
-		// Create the new todo
-		var options = {'url' : path, 'form': JSON.stringify(desiredPayload)};
- 		request.post(options, function (err, res, body){ 
-			if(err){
-				throw new Error("Create call failed: " + err);
-			}
-			assert.equal(200, res.statusCode, "Create Status Code != 200 (" + res.statusCode + ")");
-			var todo = JSON.parse(res.body);
-			// Now delete the todo
-			var deletePath = path + "/" + todo.id;
-			request.del(deletePath, function (err, res, body){ 
-				if(err){
-					throw new Error("Delete call failed: " + err);
-				}
-				assert.equal(200, res.statusCode, "Delete Status Code != 200 (" + res.statusCode + ")"); 
-				done();   
-		  	});		
-  		});
+    // Create the new todo
+    request.post({ url: base, json: payload }, (err, res, body) => {
+      if (err) throw new Error(`Create call failed: ${err}`);
+      assert.strictEqual(res.statusCode, 200, `Create Status Code != 200 (${res.statusCode})`);
+      const id = body.id;
+
+      // Delete the created todo
+      const deleteUrl = `${base}/${id}`;
+      request.del({ url: deleteUrl }, (err, res) => {
+        if (err) throw new Error(`Delete call failed: ${err}`);
+        assert.strictEqual(res.statusCode, 200, `Delete Status Code != 200 (${res.statusCode})`);
+        done();
+      });
     });
+  });
 });
