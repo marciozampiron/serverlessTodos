@@ -1,15 +1,85 @@
-version: 0.1
-phases:
-  install:
-    commands:
-      - echo "Installing Node.js 14 via nvm..."
-      - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-      - . ~/.nvm/nvm.sh
-      - nvm install 14
-      - npm install
-  build:
-    commands:
-      - ./node_modules/.bin/serverless deploy --stage cicd | tee deploy.out
-  post_build:
-    commands:
-      - ./test.sh
+service: serverless-todo-cicd
+
+frameworkVersion: ">=1.1.0 <2.0.0"
+
+provider:
+  name: aws
+  runtime: nodejs20.x
+  environment:
+    TABLE_NAME: todos-${opt:stage, self:provider.stage}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource: "arn:aws:dynamodb:*:*:*"
+
+package:
+  excludeDevDependencies: true    # só vai incluir as deps de produção
+  exclude:
+    - node_modules/**             # continua excluindo tudo em node_modules
+  include:
+    - src/**                       # mas inclui todo o seu código-fonte
+
+functions:
+  create:
+    handler: src/todos/create.create
+    events:
+      - http:
+          path: todos
+          method: post
+          cors: true
+
+  list:
+    handler: src/todos/list.list
+    events:
+      - http:
+          path: todos
+          method: get
+          cors: true
+
+  get:
+    handler: src/todos/get.get
+    events:
+      - http:
+          path: todos/{id}
+          method: get
+          cors: true
+
+  update:
+    handler: src/todos/update.update
+    events:
+      - http:
+          path: todos/{id}
+          method: put
+          cors: true
+
+  delete:
+    handler: src/todos/delete.delete
+    events:
+      - http:
+          path: todos/{id}
+          method: delete
+          cors: true
+
+resources:
+  Resources:
+    TodosDynamoDbTable:
+      Type: 'AWS::DynamoDB::Table'
+      DeletionPolicy: Retain
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: 'todos-${opt:stage, self:provider.stage}'
