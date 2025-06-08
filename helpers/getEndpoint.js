@@ -1,15 +1,22 @@
-fs = require('fs')
-fs.readFile(__dirname + '/../.build/deploy.out', 'utf8', function (err,data) {
-  if (err)
-    throw (err);
+const { execSync } = require('child_process');
 
-  var lines = data.split("\n");
-  for (var i = 0; lines.length > i; i++) {
-    if(lines[i].indexOf("POST") > -1) {
-	  var startIndex = lines[i].indexOf("https://") + 8;
-	  var endIndex = lines[i].indexOf("/todos");
-	  console.log(lines[i].substring(startIndex, endIndex));
-	  i = lines.length;
-    }
+try {
+  // Query CloudFormation for the ServiceEndpoint output
+  const raw = execSync(
+    `aws cloudformation describe-stacks \
+      --stack-name serverless-todo-cicd-cicd \
+      --query "Stacks[0].Outputs[?OutputKey=='ServiceEndpoint'].OutputValue" \
+      --output text`
+  ).toString().trim();
+
+  if (!raw) {
+    console.error('❌ ServiceEndpoint not found in CloudFormation outputs');
+    process.exit(1);
   }
-});
+
+  console.log(raw);
+} catch (err) {
+  console.error('❌ Error fetching ServiceEndpoint:', err.message);
+  process.exit(1);
+}
+
