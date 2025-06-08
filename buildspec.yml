@@ -1,11 +1,34 @@
 version: 0.1
+
 phases:
   install:
+    runtime-versions:
+      nodejs: 14   # pin to Node 14 to avoid known empty-zip bugs
     commands:
+      - echo "Installing dependencies..."
       - npm install
+
+  pre_build:
+    commands:
+      - echo "Cleaning previous build artifacts..."
+      - rm -rf .serverless .build
+      - echo "Verifying Serverless Framework version..."
+      - npx serverless --version
+
   build:
     commands:
-      - ./node_modules/.bin/serverless deploy --stage cicd | tee deploy.out
+      - echo "Packaging service without deployment..."
+      - npx serverless package --stage cicd
+      - echo "Inspecting package contents..."
+      - unzip -l .serverless/serverless-todo-cicd-cicd.zip
+      - echo "Deploying service to AWS..."
+      - npx serverless deploy --stage cicd | tee .build/deploy.out
+
   post_build:
     commands:
+      - echo "Running integration tests..."
       - ./test.sh
+
+artifacts:
+  files:
+    - .build/deploy.out
