@@ -4,7 +4,7 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 
 provider:
   name: aws
-  runtime: nodejs14.x
+  runtime: nodejs20.x
   environment:
     TABLE_NAME: todos-${opt:stage, self:provider.stage}
   iamRoleStatements:
@@ -20,11 +20,11 @@ provider:
       Resource: "arn:aws:dynamodb:*:*:*"
 
 package:
-  excludeDevDependencies: true    # só inclui dependências de produção
+  excludeDevDependencies: true
   exclude:
-    - node_modules/**             # exclui todo node_modules
+    - node_modules/**
   include:
-    - src/**                       # re-inclui seu código-fonte
+    - src/**
 
 functions:
   create:
@@ -71,7 +71,6 @@ resources:
   Resources:
     TodosDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
-      # Remova a linha abaixo se quiser que a tabela seja excluída junto com a stack
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
@@ -85,14 +84,15 @@ resources:
           WriteCapacityUnits: 1
         TableName: todos-${opt:stage, self:provider.stage}
 
-# ---- Outputs para expor o endpoint da API ----
-outputs:
-  ServiceEndpoint:
-    Description: "URL do endpoint da API Gateway"
-    Value:
-      Fn::Join:
-        - ""
-        - - "https://"
-          - Ref: ApiGatewayRestApi
-          - ".execute-api.${AWS::Region}.amazonaws.com/"
-          - ${opt:stage, self:provider.stage}
+  Outputs:
+    ServiceEndpoint:
+      Description: "URL do endpoint da API Gateway"
+      Value:
+        Fn::Join:
+          - ""
+          - - "https://"
+            - Ref: ApiGatewayRestApi
+            - ".execute-api."
+            - Ref: "AWS::Region"
+            - ".amazonaws.com/"
+            - Ref: "Stage"
