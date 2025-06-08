@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 14     # evita bugs de ZIP vazio em Node >=15
+      nodejs: 14   # pin to Node 14 to avoid known empty-zip bugs
     commands:
       - echo "Installing dependencies..."
       - npm install
@@ -19,13 +19,11 @@ phases:
     commands:
       - echo "Packaging service without deployment..."
       - npx serverless package --stage cicd
-
       - echo "Inspecting package contents..."
       - ZIP_FILE=$(ls .serverless/*.zip | head -n1)
       - if [ -z "$ZIP_FILE" ]; then echo "❌ No zip artifact found"; exit 1; fi
       - echo "Found package: $ZIP_FILE"
       - unzip -l "$ZIP_FILE"
-
       - echo "Deploying service to AWS..."
       - mkdir -p .build
       - npx serverless deploy --stage cicd | tee .build/deploy.out
