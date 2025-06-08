@@ -29,7 +29,7 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/mocha",
-    "test:remote": "mkdir -p .build; . ./helpers/endpoint.sh; npm run test",
+    "test:remote": "mkdir -p .build; bash helpers/endpoint.sh; npm run test",
     "clean": "rm -rf node_modules && rm -rf src/node_modules",
     "deploy": "./node_modules/.bin/serverless deploy | tee .build/deploy.out",
     "deploy:cicd": "./node_modules/.bin/serverless deploy --stage cicd | tee .build/deploy.out",
