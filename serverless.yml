@@ -1,34 +1,15 @@
-version: 0.2
-
+version: 0.1
 phases:
   install:
-    runtime-versions:
-      nodejs: 14     # pin to Node.js 14
     commands:
-      - echo "Installing dependencies..."
+      - echo "Installing Node.js 14 via nvm..."
+      - curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+      - . ~/.nvm/nvm.sh
+      - nvm install 14
       - npm install
-
-  pre_build:
-    commands:
-      - echo "Cleaning up artifacts..."
-      - rm -rf .serverless .build
-      - echo "Serverless version:"
-      - npx serverless --version
-
   build:
     commands:
-      - echo "Packaging without deploy..."
-      - npx serverless package --stage cicd
-      - echo "Inspecting ZIP contents..."
-      - unzip -l .serverless/serverless-todo-cicd-cicd.zip
-      - echo "Deploying to AWS..."
-      - npx serverless deploy --stage cicd | tee .build/deploy.out
-
+      - ./node_modules/.bin/serverless deploy --stage cicd | tee deploy.out
   post_build:
     commands:
-      - echo "Running integration tests..."
       - ./test.sh
-
-artifacts:
-  files:
-    - .build/deploy.out
