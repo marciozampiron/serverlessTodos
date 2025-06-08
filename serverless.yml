@@ -93,6 +93,6 @@ resources:
           - - "https://"
             - Ref: ApiGatewayRestApi
             - ".execute-api."
-            - Ref: "AWS::Region"
+            - Ref: AWS::Region
             - ".amazonaws.com/"
-            - Ref: "Stage"
+            - ${opt:stage, self:provider.stage}
