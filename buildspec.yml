@@ -30,7 +30,7 @@ phases:
 
   post_build:
     commands:
-      - echo "Fetching API endpoint..."
+      - echo "Running endpoint helper with Bash..."
       - bash helpers/endpoint.sh
       - echo "Running integration tests..."
       - npm run test:remote
