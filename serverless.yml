@@ -20,11 +20,11 @@ provider:
       Resource: "arn:aws:dynamodb:*:*:*"
 
 package:
-  excludeDevDependencies: true    # só vai incluir as deps de produção
+  excludeDevDependencies: true    # só inclui dependências de produção
   exclude:
-    - node_modules/**             # continua excluindo tudo em node_modules
+    - node_modules/**             # exclui todo node_modules
   include:
-    - src/**                       # mas inclui todo o seu código-fonte
+    - src/**                       # re-inclui seu código-fonte
 
 functions:
   create:
@@ -71,6 +71,7 @@ resources:
   Resources:
     TodosDynamoDbTable:
       Type: 'AWS::DynamoDB::Table'
+      # Remova a linha abaixo se quiser que a tabela seja excluída junto com a stack
       DeletionPolicy: Retain
       Properties:
         AttributeDefinitions:
@@ -82,4 +83,16 @@ resources:
         ProvisionedThroughput:
           ReadCapacityUnits: 1
           WriteCapacityUnits: 1
-        TableName: 'todos-${opt:stage, self:provider.stage}'
+        TableName: todos-${opt:stage, self:provider.stage}
+
+# ---- Outputs para expor o endpoint da API ----
+outputs:
+  ServiceEndpoint:
+    Description: "URL do endpoint da API Gateway"
+    Value:
+      Fn::Join:
+        - ""
+        - - "https://"
+          - Ref: ApiGatewayRestApi
+          - ".execute-api.${AWS::Region}.amazonaws.com/"
+          - ${opt:stage, self:provider.stage}
