@@ -1,8 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# Fetch and export the API endpoint
-ENDPOINT=$(node helpers/getEndpoint.js)
-export TODOS_ENDPOINT="https://${ENDPOINT}"
+endpoint=$(node helpers/getEndpoint.js)
+echo "$endpoint" > .build/endpoint.out
+export TODOS_ENDPOINT="https://$endpoint"
 
-echo "✔ Using API base URL: $TODOS_ENDPOINT"
+
