@@ -4,7 +4,7 @@ frameworkVersion: ">=1.1.0 <2.0.0"
 
 provider:
   name: aws
-  runtime: nodejs22
+  runtime: nodejs20.x
   environment:
       TABLE_NAME: todos-${opt:stage, self:provider.stage}
   iamRoleStatements:
