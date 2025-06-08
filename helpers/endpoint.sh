@@ -1,9 +1,8 @@
 #!/bin/bash
+set -euo pipefail
 
-# Assuming you deployed with a 'serverless deploy | tee deploy.out' this script
-# will auto fill in the TODOS_ENDPOINT environment variable
+# Fetch and export the API endpoint
+ENDPOINT=$(node helpers/getEndpoint.js)
+export TODOS_ENDPOINT="https://${ENDPOINT}"
 
-node helpers/getEndpoint.js > .build/endpoint.out
-export TODOS_ENDPOINT=`cat .build/endpoint.out`
-
-echo $TODOS_ENDPOINT
+echo "✔ Using API base URL: $TODOS_ENDPOINT"
