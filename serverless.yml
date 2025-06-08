@@ -1,85 +1,34 @@
-service: serverless-todo-cicd
+version: 0.2
 
-frameworkVersion: ">=1.1.0 <2.0.0"
+phases:
+  install:
+    runtime-versions:
+      nodejs: 14     # pin to Node.js 14
+    commands:
+      - echo "Installing dependencies..."
+      - npm install
 
-provider:
-  name: aws
-  runtime: nodejs20.x
-  environment:
-    TABLE_NAME: todos-${opt:stage, self:provider.stage}
-  iamRoleStatements:
-    - Effect: Allow
-      Action:
-        - dynamodb:DescribeTable
-        - dynamodb:Query
-        - dynamodb:Scan
-        - dynamodb:GetItem
-        - dynamodb:PutItem
-        - dynamodb:UpdateItem
-        - dynamodb:DeleteItem
-      Resource: "arn:aws:dynamodb:*:*:*"
+  pre_build:
+    commands:
+      - echo "Cleaning up artifacts..."
+      - rm -rf .serverless .build
+      - echo "Serverless version:"
+      - npx serverless --version
 
-package:
-  excludeDevDependencies: true    # só vai incluir as deps de produção
-  exclude:
-    - node_modules/**             # continua excluindo tudo em node_modules
-  include:
-    - src/**                       # mas inclui todo o seu código-fonte
+  build:
+    commands:
+      - echo "Packaging without deploy..."
+      - npx serverless package --stage cicd
+      - echo "Inspecting ZIP contents..."
+      - unzip -l .serverless/serverless-todo-cicd-cicd.zip
+      - echo "Deploying to AWS..."
+      - npx serverless deploy --stage cicd | tee .build/deploy.out
 
-functions:
-  create:
-    handler: src/todos/create.create
-    events:
-      - http:
-          path: todos
-          method: post
-          cors: true
+  post_build:
+    commands:
+      - echo "Running integration tests..."
+      - ./test.sh
 
-  list:
-    handler: src/todos/list.list
-    events:
-      - http:
-          path: todos
-          method: get
-          cors: true
-
-  get:
-    handler: src/todos/get.get
-    events:
-      - http:
-          path: todos/{id}
-          method: get
-          cors: true
-
-  update:
-    handler: src/todos/update.update
-    events:
-      - http:
-          path: todos/{id}
-          method: put
-          cors: true
-
-  delete:
-    handler: src/todos/delete.delete
-    events:
-      - http:
-          path: todos/{id}
-          method: delete
-          cors: true
-
-resources:
-  Resources:
-    TodosDynamoDbTable:
-      Type: 'AWS::DynamoDB::Table'
-      DeletionPolicy: Retain
-      Properties:
-        AttributeDefinitions:
-          - AttributeName: id
-            AttributeType: S
-        KeySchema:
-          - AttributeName: id
-            KeyType: HASH
-        ProvisionedThroughput:
-          ReadCapacityUnits: 1
-          WriteCapacityUnits: 1
-        TableName: 'todos-${opt:stage, self:provider.stage}'
+artifacts:
+  files:
+    - .build/deploy.out
