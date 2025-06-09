@@ -30,7 +30,7 @@ phases:
 
   post_build:
     commands:
-      - echo "Running integration tests..."
+      - echo "Running integration tests... Tams"
 ###      - bash -lc "npm run test:remote"
 
 artifacts:
